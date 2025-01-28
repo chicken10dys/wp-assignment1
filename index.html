@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>ZIM - Code Creativity</title>
+
+<!-- zimjs.com - JavaScript Canvas Framework -->
+<script type="module">
+
+import zim from "https://zimjs.org/cdn/017/zim";
+
+const asteroidNames = []
+for (let i = 0; i < 228; i ++){
+    // push(on end), pop(off end), unshift(on start), shift(off start)
+    if(i < 10)
+        asteroidNames.push("tile00"+i+".png");
+    else if(i < 100)
+        asteroidNames.push("tile0"+i+".png");
+    else
+        asteroidNames.push("tile"+i+".png");
+}
+asteroidNames.push("dog.png");
+zogb(asteroidNames);
+// See Docs under Frame for FIT, FILL, FULL, and TAG
+// Spread operator ... which spreads one array into another
+new Frame(FIT, 1024, 768, black, interstellar, ready, [...asteroidNames,"gf_Jockey+One","boom.png","boom.mp3","space.jpg", "pod.png", "dog.png"], "assets/");
+function ready() {
+    
+    // given F (Frame), S (Stage), W (width), H (height)
+    // put code here
+    
+    const space = new Pic("space.jpg").siz(W).center();
+    space.noMouse();
+
+
+    new Scroller(space,null,-1,false)
+
+    new Label("A S T E R O I D S",120,"Jockey One",pink)
+    .alp(0.25)
+    .pos(0,50,CENTER,TOP)
+    .animate({
+        from:true,
+        props:{y:-100},
+        ease:"bounce",
+        loop:true,
+        rewind:true
+    });
+
+
+
+
+
+    // setInterval(() = >{
+    //     console.log("hi");
+        
+    // }, 1000);
+
+    // setTimeout(() => {
+    //     console.log("once");
+    // }, 5000);
+
+    const asteroids = new Container(W,H).addTo();
+
+
+    interval({min:.5, max:2},()=>{
+        const asteroid = new Pic(asteroidNames)
+        .sca(5)
+        .loc(rand(W),-100,asteroids)
+        .reg(CENTER)
+        .cur("crosshair")
+        .animate({
+            // ternary operator if then else
+            // Math.random()>0.5 ? 360 : -360
+            props:{rotation:[360,-360]},
+            // time: 2,
+            // ease:"elasticInOut",
+            // rewind:true,
+            time: rand(5,8),
+            ease: "linear",
+            loop:true
+        })
+        .animate({
+            props:{y:H+200},
+            time: rand(3,6),
+            ease:"linear",
+            call:()=>{asteroid.dispose();}
+        });
+
+        
+        
+    })
+
+    
+    // const boomSound = new Aud("boom.mp3");
+    // const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
+
+    asteroids.on("mousedown", (e)=>{
+        explode(e.target);
+        score ++;
+        scorer.text = score;
+
+    })
+
+
+    
+
+    const pod = new Pic("pod.png")
+        .reg(CENTER)
+        .sca(.25)
+        .pos(0,50,CENTER,BOTTOM)
+    
+    // //window.addEventListener("keydown", movePod);movePod);
+
+    // F.on("keydown", (e) =>{ //you can take off the round brackets around e if there is only one parameter
+    //     zogp(e.key);
+    //     if (e.key == "ArrowLeft") 
+    //         pod.mov(-5);
+    //     else if (e.key == "ArrowRight")
+    //         pod.mov(5);
+    // });
+
+    new MotionController(pod,"keydown",null,HORIZONTAL,new Boundary(pod.width/2,pod.y,W-pod.width,0));
+    // new MotionController({
+    //     target:pod,
+    //     mousedownIncludes:space
+    // });
+
+
+    const boomSound = new Aud("boom.mp3");
+
+    const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
+        
+
+    // // Do not chain the on method as it returns an id to turn off()
+    // asteroid.on("mousedown", explode);
+
+    function explode(asteroid) {
+        // zogr();
+        // boomSound.play();
+
+        // explosion.sca(1.5).loc(asteroid).run();
+
+        // asteroid.removeFrom();
+
+        boomSound.play();
+        explosion.sca(1.5).loc(asteroid).run();
+        asteroid.dispose();
+        console.log("RAHHHHHH");
+    }
+    let score = 0;
+
+    Ticker.add(()=>{
+        // https://zimjs.com/tips#HITTEST
+        asteroids.loop(asteroid=>{
+            if (asteroid.hitTestCircle(pod)){
+                explode(asteroid);
+                console.log("hit");
+                score --;
+                scorer.text = score;
+
+            }
+        }, true) // true is loop backwards
+    })
+
+    STYLE = {backgroundColor:yellow, shiftV:6}
+    const scorer = new Label(0,50,"Jockey One", black).pos(70,70,RIGHT)
+
+
+    
+
+} // end ready
+
+</script>
+<meta name="viewport" content="width=device-width, user-scalable=no" />
+</head>
+<body></body>
+</html>
