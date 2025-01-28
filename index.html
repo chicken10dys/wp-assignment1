@@ -9,22 +9,28 @@
 
 import zim from "https://zimjs.org/cdn/017/zim";
 
-const asteroidNames = []
+const fruitNames = []
 for (let i = 0; i < 228; i ++){
     // push(on end), pop(off end), unshift(on start), shift(off start)
     if(i < 10)
-        asteroidNames.push("tile00"+i+".png");
+        fruitNames.push("tile00"+i+".png");
     else if(i < 100)
-        asteroidNames.push("tile0"+i+".png");
+        fruitNames.push("tile0"+i+".png");
     else
-        asteroidNames.push("tile"+i+".png");
+        fruitNames.push("tile"+i+".png");
 }
-asteroidNames.push("dog.png");
-zogb(asteroidNames);
+fruitNames.push("dog.png");
+zogb(fruitNames);
 // See Docs under Frame for FIT, FILL, FULL, and TAG
 // Spread operator ... which spreads one array into another
-new Frame(FIT, 1024, 768, black, interstellar, ready, [...asteroidNames,"gf_Jockey+One","boom.png","boom.mp3","bg1.png", "pod.png", "dog.png"], "assets/");
+new Frame(FIT, 1024, 768, black, interstellar, ready, [...fruitNames,"gf_Jockey+One","boom.png","boom.mp3","bg1.png", "basket.png", "dog.png"], "assets/");
 function ready() {
+
+    const boomSound = new Aud("boom.mp3");
+
+    const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
+
+    let score = 0;
     
     // given F (Frame), S (Stage), W (width), H (height)
     // put code here
@@ -59,13 +65,13 @@ function ready() {
     //     console.log("once");
     // }, 5000);
 
-    const asteroids = new Container(W,H).addTo();
+    const fruits = new Container(W,H).addTo();
 
 
     interval({min:.5, max:2},()=>{
-        const asteroid = new Pic(asteroidNames)
+        const fruit = new Pic(fruitNames)
         .sca(5)
-        .loc(rand(W),-100,asteroids)
+        .loc(rand(W),-100,fruits)
         .reg(CENTER)
         .cur("crosshair")
         .animate({
@@ -80,10 +86,15 @@ function ready() {
             loop:true
         })
         .animate({
-            props:{y:H+200},
+            props:{y:H},
             time: rand(3,6),
             ease:"linear",
-            call:()=>{asteroid.dispose();}
+            call:()=>{
+                fruit.dispose();
+                boomSound.play();
+                score --;
+                scorer.text = score;
+            }
         });
 
         
@@ -94,69 +105,70 @@ function ready() {
     // const boomSound = new Aud("boom.mp3");
     // const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
 
-    asteroids.on("mousedown", (e)=>{
-        explode(e.target);
-        score ++;
-        scorer.text = score;
+    // No longer needed
+    // fruits.on("mousedown", (e)=>{
+    //     explode(e.target);
+    //     score ++;
+    //     scorer.text = score;
+    //     fruit.dispose();
 
-    })
+    // })
 
 
     
 
-    const pod = new Pic("pod.png")
+    const basket = new Pic("basket.png")
         .reg(CENTER)
         .sca(.25)
         .pos(0,50,CENTER,BOTTOM)
     
-    // //window.addEventListener("keydown", movePod);movePod);
+    // //window.addEventListener("keydown", movebasket);movebasket);
 
     // F.on("keydown", (e) =>{ //you can take off the round brackets around e if there is only one parameter
     //     zogp(e.key);
     //     if (e.key == "ArrowLeft") 
-    //         pod.mov(-5);
+    //         basket.mov(-5);
     //     else if (e.key == "ArrowRight")
-    //         pod.mov(5);
+    //         basket.mov(5);
     // });
 
-    new MotionController(pod,"keydown",null,HORIZONTAL,new Boundary(pod.width/2,pod.y,W-pod.width,0));
+    new MotionController(basket,"keydown",null,HORIZONTAL,new Boundary(basket.width/2,basket.y,W-basket.width,0));
     // new MotionController({
-    //     target:pod,
+    //     target:basket,
     //     mousedownIncludes:space
     // });
 
 
-    const boomSound = new Aud("boom.mp3");
 
-    const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
         
 
     // // Do not chain the on method as it returns an id to turn off()
-    // asteroid.on("mousedown", explode);
+    // fruit.on("mousedown", explode);
 
-    function explode(asteroid) {
+    function explode(fruit) {
         // zogr();
         // boomSound.play();
 
-        // explosion.sca(1.5).loc(asteroid).run();
+        // explosion.sca(1.5).loc(fruit).run();
 
-        // asteroid.removeFrom();
+        // fruit.removeFrom();
 
         boomSound.play();
-        explosion.sca(1.5).loc(asteroid).run();
-        asteroid.dispose();
+        explosion.sca(1.5).loc(fruit).run();
+        fruit.dispose();
         console.log("RAHHHHHH");
     }
-    let score = 0;
+
 
     Ticker.add(()=>{
         // https://zimjs.com/tips#HITTEST
-        asteroids.loop(asteroid=>{
-            if (asteroid.hitTestCircle(pod)){
-                explode(asteroid);
+        fruits.loop(fruit=>{
+            if (fruit.hitTestCircle(basket)){
+                
                 console.log("hit");
-                score --;
+                score ++;
                 scorer.text = score;
+                fruit.dispose();
 
             }
         }, true) // true is loop backwards
