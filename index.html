@@ -23,19 +23,19 @@ asteroidNames.push("dog.png");
 zogb(asteroidNames);
 // See Docs under Frame for FIT, FILL, FULL, and TAG
 // Spread operator ... which spreads one array into another
-new Frame(FIT, 1024, 768, black, interstellar, ready, [...asteroidNames,"gf_Jockey+One","boom.png","boom.mp3","space.jpg", "pod.png", "dog.png"], "assets/");
+new Frame(FIT, 1024, 768, black, interstellar, ready, [...asteroidNames,"gf_Jockey+One","boom.png","boom.mp3","bg1.png", "pod.png", "dog.png"], "assets/");
 function ready() {
     
     // given F (Frame), S (Stage), W (width), H (height)
     // put code here
     
-    const space = new Pic("space.jpg").siz(W).center();
+    const space = new Pic("bg1.png").siz(W).center();
     space.noMouse();
 
 
     new Scroller(space,null,-1,false)
 
-    new Label("A S T E R O I D S",120,"Jockey One",pink)
+    new Label("Fruit Catch",120,"Jockey One",pink)
     .alp(0.25)
     .pos(0,50,CENTER,TOP)
     .animate({
