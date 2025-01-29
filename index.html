@@ -7,11 +7,10 @@
 <!-- zimjs.com - JavaScript Canvas Framework -->
 <script type="module">
 
-import zim from "https://zimjs.org/cdn/017/zim";
+import zim from "https://zimjs.org/cdn/017/zim"; // import ZIM
 
-const fruitNames = []
+const fruitNames = [] // this array contains filenames from tile000.png to tile227.png, and dog.png
 for (let i = 0; i < 228; i ++){
-    // push(on end), pop(off end), unshift(on start), shift(off start)
     if(i < 10)
         fruitNames.push("tile00"+i+".png");
     else if(i < 100)
@@ -20,33 +19,58 @@ for (let i = 0; i < 228; i ++){
         fruitNames.push("tile"+i+".png");
 }
 fruitNames.push("dog.png");
-zogb(fruitNames);
-// See Docs under Frame for FIT, FILL, FULL, and TAG
-// Spread operator ... which spreads one array into another
-new Frame(FIT, 1024, 768, black, interstellar, ready, [...fruitNames,"gf_Jockey+One","boom.png","boom.mp3","bg1.png", "basket.png", "dog.png"], "assets/");
+
+
+const bombNames = [] // this array contains filenames from bomb0.png to bomb2.png
+for (let i = 0; i < 3; i ++) {
+    bombNames.push("bomb"+i+".png")
+}
+
+
+STYLE = {backgroundColor:"#3c0001", color:yellow, shiftV:6} // this is the default style for display objects
+
+const collectSoundsFiles = [] // this array contains filenames from collectSound0.wav to collectSound5.wav
+for (let i = 0; i < 6; i ++) {
+    collectSoundsFiles.push("collectSound"+i+".wav")
+}
+
+
+// initiante the Frame
+new Frame(FIT, 1024, 768, black, "#5f6945", ready, [...fruitNames,...bombNames,...collectSoundsFiles,"gf_Jockey+One","boom.png","boom.mp3","bg1.png", "basket.png","play.png","splat.mp3", "dogHeal.mp3"], "assets/");
 function ready() {
 
-    const boomSound = new Aud("boom.mp3");
+    const boomSound = new Aud("boom.mp3"); // SFX for explosions
+    const splatSound = new Aud("splat.mp3"); // SFX for fruits falling on the ground
+    const dogHealSound = new Aud("dogHeal.mp3") // SFX for the corndog that restores hp
 
-    const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
 
-    let score = 0;
+    // this is an array of Aud instances, from which a random one is played upon fruit collection
+    const collectSounds = collectSoundsFiles.map(fileName => new Aud(fileName))
+    zogb(collectSounds);
+
+    const explosion = new Sprite("boom.png", 8, 6).reg(CENTER); // exposion visual effect
+
+   
     
-    // given F (Frame), S (Stage), W (width), H (height)
-    // put code here
-    
-    const space = new Pic("bg1.png").siz(W).center();
-    space.noMouse();
 
+    // this specifies the background
+    const background = new Pic("bg1.png").siz(W).center();
+    background.noMouse();
 
-    new Scroller(space,null,-1,false)
+    // this makes the background scroll
+    new Scroller(background,null,-1,false)
 
-    new Label("Fruit Catch",120,"Jockey One",pink)
+    // this label is the game name, it's hidden during gameplay
+    const gameName = new Label({
+        text:"Fruit Catch",
+        size:120,font:"Jockey One",
+        color:yellow,
+        backgroundColor:"transparent"})
     .alp(0.25)
-    .pos(0,50,CENTER,TOP)
+    .pos(0,150,CENTER,TOP)
     .animate({
         from:true,
-        props:{y:-100},
+        props:{y: 30},
         ease:"bounce",
         loop:true,
         rewind:true
@@ -56,131 +80,229 @@ function ready() {
 
 
 
-    // setInterval(() = >{
-    //     console.log("hi");
-        
-    // }, 1000);
 
-    // setTimeout(() => {
-    //     console.log("once");
-    // }, 5000);
-
-    const fruits = new Container(W,H).addTo();
+    const fallingObjects = new Container(W,H).addTo(); // container for fruits and bombs
+    const menu = new Container(W,H).addTo(); // menu container for overlaying UI elements
 
 
-    interval({min:.5, max:2},()=>{
-        const fruit = new Pic(fruitNames)
-        .sca(5)
-        .loc(rand(W),-100,fruits)
+    // below are makers that make falling objects
+
+    // this interval creates fruits that fall and need to be caught
+    const fruitmaker = interval({min:.5, max:2},()=>{
+        const fruit = new Pic(fruitNames) // a random file name is chosen and made into Pic
+        .sca(5) // scale fivefold (usually fruits are 16x16 px)
+        .loc(rand(W),-100,fallingObjects) // spawn on top of the screen, randomly on horizontal axis, put in falling objects
         .reg(CENTER)
-        .cur("crosshair")
-        .animate({
-            // ternary operator if then else
-            // Math.random()>0.5 ? 360 : -360
-            props:{rotation:[360,-360]},
-            // time: 2,
-            // ease:"elasticInOut",
-            // rewind:true,
+        
+        .animate({ 
+            props:{rotation:[360,-360]}, // make spin
             time: rand(5,8),
             ease: "linear",
             loop:true
         })
         .animate({
-            props:{y:H},
-            time: rand(3,6),
+            props:{y:H+50}, // make fall to 50 below the height of the Scene
+            time: rand(3,6), // fruits fall much slower than bombs
             ease:"linear",
-            call:()=>{
+            call:()=>{ // delete from memory when animation is over
                 fruit.dispose();
-                boomSound.play();
-                score --;
-                scorer.text = score;
             }
         });
-
-        
-        
+  
     })
 
+    // this interval makes falling bombs that need to be avoided
+    const bombmaker = interval({min:.5, max:2}, ()=>{
+            const bomb = new Pic(bombNames) // a random file name is chosen and made into Pic
+            .sca(.2) // scaled down fivefold (the length of a bomb should be around 800 px)
+            .loc(rand(W), -100, fallingObjects) // spawn on top of the screen, randomly on horizontal axis, put in falling objects
+            .animate({
+                props:{y:H}, // make fall to below the height of the Scene
+                time: rand(1.2,2), // bombs fall much faster than fruits
+                ease:"linear",
+                call:()=>{
+                    bomb.dispose(); // delete from memory when animation is over
+                }
+            });}
+        )
+
     
-    // const boomSound = new Aud("boom.mp3");
-    // const explosion = new Sprite("boom.png", 8, 6).reg(CENTER);
 
-    // No longer needed
-    // fruits.on("mousedown", (e)=>{
-    //     explode(e.target);
-    //     score ++;
-    //     scorer.text = score;
-    //     fruit.dispose();
-
-    // })
 
 
     
-
+    // the basket picture
     const basket = new Pic("basket.png")
         .reg(CENTER)
         .sca(.25)
         .pos(0,50,CENTER,BOTTOM)
-    
-    // //window.addEventListener("keydown", movebasket);movebasket);
 
-    // F.on("keydown", (e) =>{ //you can take off the round brackets around e if there is only one parameter
-    //     zogp(e.key);
-    //     if (e.key == "ArrowLeft") 
-    //         basket.mov(-5);
-    //     else if (e.key == "ArrowRight")
-    //         basket.mov(5);
-    // });
-
-    new MotionController(basket,"keydown",null,HORIZONTAL,new Boundary(basket.width/2,basket.y,W-basket.width,0));
-    // new MotionController({
-    //     target:basket,
-    //     mousedownIncludes:space
-    // });
+    // basket can move along a horizontal axis on the bottom of the screen
+    new MotionController(basket,"keydown",25,HORIZONTAL,new Boundary(basket.width/2,basket.y,W-basket.width,0));
+  
 
 
 
         
 
-    // // Do not chain the on method as it returns an id to turn off()
-    // fruit.on("mousedown", explode);
 
-    function explode(fruit) {
-        // zogr();
-        // boomSound.play();
 
-        // explosion.sca(1.5).loc(fruit).run();
+// function that displays game over and a button to restart the game
+// also cleans up score and any falling objects
+// contains an anonymous function that RESTARTS the game
+    function gameOver() { 
+        new Label({ // display game over in the middle of the screen
+            text: "Game Over",
+            size: 100,
+            font: "Jockey One",
+        }).centerReg().loc(null, null, menu); // is part of menu
 
-        // fruit.removeFrom();
+        // halt the makers, show the game name again
+        fruitmaker.pause(true);
+        bombmaker.pause(true);
+        gameName.addTo();
 
-        boomSound.play();
-        explosion.sca(1.5).loc(fruit).run();
-        fruit.dispose();
-        console.log("RAHHHHHH");
+        // clean up any falling objects on the screen
+        fallingObjects.removeAllChildren();
+        
+
+        
+        // label that is used on the "try again" button
+        const buttonLabel = new Label({
+            text: "Try again",
+            size: 50,
+            font: "Jockey One",
+            color: black, // has a unique style
+            backgroundColor: green
+        }).loc(null, null, menu) // is part of menu
+
+
+        // the "try again" button
+        // contains an anonymous function that RESTARTS the game
+        new Button({
+            label: buttonLabel,
+            color: black,
+            backgroundColor: green
+        })
+        .centerReg().cur("pointer")
+        .loc(null,W/2,menu) // is part of menu
+        .tap(()=>{ // this function restarts the game!!
+            fruitmaker.pause(false); // restart the makers
+            bombmaker.pause(false);
+            gameName.removeFrom();
+            score = 0; scorer.text = score; // annul the score (record gets updated in real time)
+            lifecount.text = 3; // give 3 new lives
+            menu.removeAllChildren(); // clear menu, i.e. everything created by "game over" function
+        });
+
     }
 
-
+    // this runs all the time
     Ticker.add(()=>{
-        // https://zimjs.com/tips#HITTEST
-        fruits.loop(fruit=>{
-            if (fruit.hitTestCircle(basket)){
-                
-                console.log("hit");
-                score ++;
-                scorer.text = score;
-                fruit.dispose();
+      
+        // interates through all falling objects constantly
+        fallingObjects.loop(fallingObject=>{
 
+            // checks what hits the busket
+            if (fallingObject.hitTestCircle(basket)){
+                
+                // if it's a bomb, play an explosion and end the game immediately
+                if (fallingObject.file.includes("bomb")) {
+                    lifecount.text = "\uD83D\uDCA5"; // makes lifecount display a unicode explosion emoji
+                    explosion.sca(1.5).loc(fallingObject).run(); // explosion animation
+                    boomSound.play(); // explosion sound
+                    gameOver() // call game over function
+                    return null // explicitly return nothing to avoid errors
+                }
+                
+                // if it's not a bomb, +1 to score, compare with record (undate if needed)
+                // and remove the object, playing a random collect-sound
+                else {
+                    if (fallingObject.file.includes("dog")) { // if it's a corn dog, then
+                        dogHealSound.play(); // play a special sound,
+                        lifecount.text = +lifecount.text + 2 // and give player 2 additional lives
+                    }
+
+                    score ++; // +1 to score
+                    scorer.text = score; // update the scorer
+                    if (score > record) { // if the record is beaten, update it
+                        record = score;
+                        recordLabel.text = recordString + record.toString()
+                    }
+
+                    fallingObject.dispose(); // remove object
+                    collectSounds[rand(0,5)].play(); // play a random collect sound  
+                }
             }
-        }, true) // true is loop backwards
+
+            // if the object is below the screen, remove it, lowering the score and playing a splat sound if it isn't a bomb
+            if (fallingObject.y >= 800) {
+                fallingObject.removeFrom();
+                if (lifecount.text > 0 && !fallingObject.file.includes("bomb")) {
+                    lifecount.text --;// when not caught, fallingObject will lower lives by 1
+                    splatSound.play();// and play a splat sound
+                }; 
+                if (lifecount.text == 0) {
+                    gameOver();
+                }
+            
+            }
+        }, true) // true is to loop backwards (avoids going through empty places)
     })
 
-    STYLE = {backgroundColor:yellow, shiftV:6}
-    const scorer = new Label(0,50,"Jockey One", black).pos(70,70,RIGHT)
+    // style for most of the text
+    STYLE = {backgroundColor:"#3c0001", color:yellow, shiftV:6}
 
+    // this displays current score
+    const scorer = new Label({
+        text: 0,
+        size: 50,
+        font: "Jockey One",
+    }).pos(70,70,RIGHT)
+
+    // this displays current number of lives
+    const lifecount = new Label({
+        text: 0,
+        size: 50,
+        font: "Jockey One",
+        color: pink,
+    }).pos(70,10,RIGHT)
 
     
+    // this displays the best score (the record)
+    const recordLabel = new Label({
+        text: 0,
+        size: 40,
+        font: "Jockey One",
+    }).pos(0,10,LEFT)
 
-} // end ready
+
+    let score = 0; // this stores currect score
+
+    // record is composed of a string and an integer value
+    const recordString = "Current record: ";
+    let record = 0;
+    
+
+    // below is supposed to execute before the player presses "Play" for the 1st time
+
+    recordLabel.text = recordString + record.toString(); // initial record value
+    lifecount.text = 3 // give player 3 lives
+    fruitmaker.pause(true); // don't start the makers until the player presses play
+    bombmaker.pause(true);
+
+    // the play button
+    const playButton = new Pic("play.png").centerReg().sca(.4).loc(H*2/3, W/2).cur("pointer");
+
+    // when pressed, play button deletes itself, hides the game name, and activates the makers
+    playButton.on("mousedown", ()=>{
+        fruitmaker.pause(false);
+        bombmaker.pause(false);
+        gameName.removeFrom();
+        playButton.dispose()
+    });
+    
+} 
 
 </script>
 <meta name="viewport" content="width=device-width, user-scalable=no" />
