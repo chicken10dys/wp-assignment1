@@ -46,7 +46,7 @@ function ready() {
 
     // this is an array of Aud instances, from which a random one is played upon fruit collection
     const collectSounds = collectSoundsFiles.map(fileName => new Aud(fileName))
-    zogb(collectSounds);
+    
 
     const explosion = new Sprite("boom.png", 8, 6).reg(CENTER); // exposion visual effect
 
