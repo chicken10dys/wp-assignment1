@@ -236,6 +236,7 @@ function ready() {
             }
 
             // if the object is below the screen, remove it, lowering the score and playing a splat sound if it isn't a bomb
+            // this is better done in the ticker than in the maker.animate(call:()=>{}) to avoid removed fruits affecting the next game 
             if (fallingObject.y >= 800) {
                 fallingObject.removeFrom();
                 if (lifecount.text > 0 && !fallingObject.file.includes("bomb")) {
